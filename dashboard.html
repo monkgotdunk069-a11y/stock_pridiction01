@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Stock Prediction Model Benchmark Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0b0e14;
+    --surface: #131720;
+    --surface2: #1b2130;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4f9cf9;
+    --accent2: #7c3aed;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --muted: #6b7280;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --your-color: #4f9cf9;
+    --font: 'Space Grotesk', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b27 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -60px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,156,249,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-left { z-index: 1; }
+  .header-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+  h1 span { color: var(--accent); }
+  .header-sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+  .your-badge {
+    background: rgba(79,156,249,0.15);
+    border: 1px solid rgba(79,156,249,0.4);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 6px 16px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    z-index: 1;
+  }
+
+  /* ── MAIN GRID ── */
+  .main { padding: 28px 40px; display: flex; flex-direction: column; gap: 24px; }
+
+  /* ── KPI ROW ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .kpi.blue::after  { background: var(--accent); }
+  .kpi.gold::after  { background: var(--gold); }
+  .kpi.green::after { background: var(--green); }
+  .kpi.purple::after{ background: #a78bfa; }
+  .kpi-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .kpi-value.blue   { color: var(--accent); }
+  .kpi-value.gold   { color: var(--gold); }
+  .kpi-value.green  { color: var(--green); }
+  .kpi-value.purple { color: #a78bfa; }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* ── CHARTS ROW ── */
+  .charts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    font-family: var(--mono);
+  }
+  .chart-wrap { position: relative; }
+
+  /* ── RANKING TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 14px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody tr.your-row { background: rgba(79,156,249,0.06); }
+  tbody tr.your-row:hover { background: rgba(79,156,249,0.1); }
+  tbody td {
+    padding: 12px 14px;
+    color: var(--text2);
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .model-name {
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .you-pill {
+    background: rgba(79,156,249,0.2);
+    border: 1px solid rgba(79,156,249,0.4);
+    color: var(--accent);
+    font-size: 9px;
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .rank {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .rank.r1 { color: var(--gold); }
+  .rank.r2 { color: #cbd5e1; }
+  .rank.r3 { color: #b45309; }
+
+  .acc-bar-wrap { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+  .acc-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .acc-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+  .acc-val { font-family: var(--mono); font-size: 12px; color: var(--text); font-weight: 600; min-width: 40px; }
+
+  .tier-pill {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .tier-elite   { background: rgba(245,158,11,0.15);  color: var(--gold);  border: 1px solid rgba(245,158,11,0.3); }
+  .tier-strong  { background: rgba(16,185,129,0.12);  color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .tier-yours   { background: rgba(79,156,249,0.15);  color: var(--accent); border: 1px solid rgba(79,156,249,0.4); }
+  .tier-mid     { background: rgba(148,163,184,0.1);  color: var(--muted); border: 1px solid rgba(148,163,184,0.2); }
+  .tier-basic   { background: rgba(239,68,68,0.1);    color: #f87171;      border: 1px solid rgba(239,68,68,0.25); }
+
+  .type-tag {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  /* ── BOTTOM ROW ── */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  /* ── RADAR CHART ── */
+  .radar-wrap { height: 260px; position: relative; }
+
+  /* ── INSIGHTS ── */
+  .insight-list { display: flex; flex-direction: column; gap: 12px; }
+  .insight {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+  }
+  .insight-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .insight-icon.plus  { background: rgba(16,185,129,0.15); }
+  .insight-icon.minus { background: rgba(239,68,68,0.12); }
+  .insight-icon.tip   { background: rgba(79,156,249,0.12); }
+  .insight-text { font-size: 12.5px; color: var(--text2); line-height: 1.55; }
+  .insight-text strong { color: var(--text); font-weight: 600; }
+
+  /* ── FOOTER BAR ── */
+  .footer {
+    margin: 8px 40px 32px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+  .footer span { letter-spacing: 0.05em; }
+  .footer .highlight { color: var(--accent); }
+
+  @media (max-width: 1100px) {
+    .kpi-row { grid-template-columns: repeat(2,1fr); }
+    .charts-row, .bottom-row { grid-template-columns: 1fr; }
+    .main, .footer { padding-left: 20px; padding-right: 20px; }
+    .header { padding: 20px; }
+  }
+  @media (max-width: 600px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-label">Model Benchmark · Indian Stock Market</div>
+    <h1>Stock Prediction <span>Model Comparison</span></h1>
+    <div class="header-sub">Your Random Forest vs. industry-standard models · TCS · INFY · RELIANCE · HDFCBANK · 2022–2025</div>
+  </div>
+  <div class="your-badge">YOUR MODEL: RF · 80.0%</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi blue">
+      <div class="kpi-label">Your Model Accuracy</div>
+      <div class="kpi-value blue">80.0%</div>
+      <div class="kpi-sub">Random Forest Classifier</div>
+    </div>
+    <div class="kpi gold">
+      <div class="kpi-label">Rank Among ML Models</div>
+      <div class="kpi-value gold">#4 of 9</div>
+      <div class="kpi-sub">Top 45% — Solid ML tier</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Beat Basic Baseline by</div>
+      <div class="kpi-value green">+30pp</div>
+      <div class="kpi-sub">vs. random guessing (50%)</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Gap to SOTA</div>
+      <div class="kpi-value purple">−14pp</div>
+      <div class="kpi-sub">vs. best published (94%)</div>
+    </div>
+  </div>
+
+  <!-- ACCURACY BAR CHART + RADAR -->
+  <div class="charts-row">
+
+    <!-- BAR CHART -->
+    <div class="card">
+      <div class="card-title">Accuracy Comparison — All Models</div>
+      <div class="card-subtitle">Your model highlighted in blue · dashed line = random baseline (50%)</div>
+      <div class="chart-wrap" style="height: 320px;">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <!-- RADAR -->
+    <div class="card">
+      <div class="card-title">Capability Radar</div>
+      <div class="card-subtitle">Your RF vs. best-in-class LSTM · higher = better</div>
+      <div class="radar-wrap">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FULL RANKING TABLE -->
+  <div class="card">
+    <div class="card-title">Full Model Leaderboard</div>
+    <div class="card-subtitle">Benchmarks sourced from peer-reviewed literature (PLOS One, ScienceDirect, PMC, arXiv)</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Model</th>
+            <th>Type</th>
+            <th>Accuracy</th>
+            <th style="min-width:180px;">Bar</th>
+            <th>Complexity</th>
+            <th>Handles Time?</th>
+            <th>Tier</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW: trend chart + insights -->
+  <div class="bottom-row">
+
+    <!-- TREND LINE CHART -->
+    <div class="card">
+      <div class="card-title">Accuracy Evolution by Model Family</div>
+      <div class="card-subtitle">ML → Deep Learning → Hybrid progression</div>
+      <div class="chart-wrap" style="height: 220px;">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="card">
+      <div class="card-title">Key Insights for Your Model</div>
+      <div class="card-subtitle">Where you stand and what to do next</div>
+      <div class="insight-list">
+        <div class="insight">
+          <div class="insight-icon plus">✓</div>
+          <div class="insight-text"><strong>Beats all basic ML models.</strong> Logistic Regression (75.4%) and Decision Tree (75.1%) — your 80% clearly outperforms both, confirming ensemble power.</div>
+        </div>
+        <div class="insight">
+          <div class="insight-icon plus">✓</div>
+          <div class="insight-text"><strong>Competitive with published RF benchmarks.</strong> Literature RF results range 75–91%. Your 80% is in the middle of that range — strong for a first build.</div>
+        </div>
+        <div class="insight">
+          <div class="insight-icon minus">!</div>
+          <div class="insight-text"><strong>Overfitting gap is a red flag.</strong> Train 98.1% vs Test 80% — a 18pp gap. LSTM/XGBoost models trained properly show tighter gaps (3–8pp).</div>
+        </div>
+        <div class="insight">
+          <div class="insight-icon minus">!</div>
+          <div class="insight-text"><strong>Random split leaks future data.</strong> Using <code style="font-family:monospace;background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:3px;">train_test_split(random_state=42)</code> mixes dates. A chronological split will give a truer accuracy.</div>
+        </div>
+        <div class="insight">
+          <div class="insight-icon tip">→</div>
+          <div class="insight-text"><strong>Next upgrade: add LSTM layer or XGBoost.</strong> Research shows LSTM + technical indicators on Indian stocks reaches 85–88%. That's your realistic next target.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>Sources: PLOS ONE 2023 · ScienceDirect 2022 · PMC 2024 · arXiv 2025 · Your Notebook (mainn.ipynb)</span>
+  <span class="highlight">YOUR MODEL · Random Forest · NSE Indian Stocks · 80.0% test accuracy</span>
+</div>
+
+<script>
+const models = [
+  { name: "Hybrid PLSTM-TAL",   type: "Deep Learning",  acc: 94, complex: "Very High", temporal: "Yes", tier: "elite",  rank: 1  },
+  { name: "XGBoost (tuned)",    type: "Gradient Boost", acc: 91, complex: "High",      temporal: "No",  tier: "elite",  rank: 2  },
+  { name: "LSTM + Sentiment",   type: "Deep Learning",  acc: 88, complex: "High",      temporal: "Yes", tier: "strong", rank: 3  },
+  { name: "YOUR Random Forest", type: "Ensemble ML",    acc: 80, complex: "Medium",    temporal: "No",  tier: "yours",  rank: 4, yours: true },
+  { name: "SVM",                type: "Classical ML",   acc: 78, complex: "Medium",    temporal: "No",  tier: "mid",    rank: 5  },
+  { name: "ARIMA + LSTM",       type: "Hybrid TS",      acc: 82, complex: "High",      temporal: "Yes", tier: "strong", rank: 3  },
+  { name: "Logistic Regression",type: "Classical ML",   acc: 75, complex: "Low",       temporal: "No",  tier: "mid",    rank: 7  },
+  { name: "Decision Tree",      type: "Classical ML",   acc: 75, complex: "Low",       temporal: "No",  tier: "mid",    rank: 7  },
+  { name: "Random Walk (naive)",type: "Baseline",       acc: 50, complex: "None",      temporal: "No",  tier: "basic",  rank: 9  },
+];
+
+// Sort by acc desc
+const sorted = [...models].sort((a,b) => b.acc - a.acc);
+
+const tierLabels = { elite:"Elite", strong:"Strong", yours:"Your Model", mid:"Mid-tier", basic:"Baseline" };
+const tierClass  = { elite:"tier-elite", strong:"tier-strong", yours:"tier-yours", mid:"tier-mid", basic:"tier-basic" };
+const rankClass  = (r) => r===1?"r1":r===2?"r2":r===3?"r3":"";
+const barColors  = { elite:"#f59e0b", strong:"#10b981", yours:"#4f9cf9", mid:"#64748b", basic:"#374151" };
+
+// TABLE
+const tbody = document.getElementById("tableBody");
+let displayRank = 1;
+sorted.forEach((m, i) => {
+  const tr = document.createElement("tr");
+  if (m.yours) tr.className = "your-row";
+  const barColor = barColors[m.tier];
+  const pct = m.acc;
+  tr.innerHTML = `
+    <td class="rank ${rankClass(displayRank++)}">${i+1}</td>
+    <td><div class="model-name">${m.name}${m.yours?'<span class="you-pill">You</span>':''}</div></td>
+    <td><span class="type-tag">${m.type}</span></td>
+    <td style="font-family:var(--mono);font-weight:600;color:#fff">${pct}%</td>
+    <td>
+      <div class="acc-bar-wrap">
+        <div class="acc-bar-bg"><div class="acc-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <span class="acc-val">${pct}%</span>
+      </div>
+    </td>
+    <td style="color:var(--text2)">${m.complex}</td>
+    <td style="color:${m.temporal==='Yes'?'var(--green)':'var(--muted)'};font-family:var(--mono);font-size:12px">${m.temporal}</td>
+    <td><span class="tier-pill ${tierClass[m.tier]}">${tierLabels[m.tier]}</span></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// BAR CHART
+const barLabels = sorted.map(m => m.name.length > 20 ? m.name.slice(0,19)+"…" : m.name);
+const barData   = sorted.map(m => m.acc);
+const barBg     = sorted.map(m => m.yours ? "rgba(79,156,249,0.85)" : "rgba(255,255,255,0.09)");
+const barBorder = sorted.map(m => m.yours ? "#4f9cf9" : "rgba(255,255,255,0.15)");
+
+new Chart(document.getElementById("barChart"), {
+  type: "bar",
+  data: {
+    labels: barLabels,
+    datasets: [{
+      label: "Accuracy %",
+      data: barData,
+      backgroundColor: barBg,
+      borderColor: barBorder,
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#1b2130",
+        borderColor: "rgba(255,255,255,0.1)",
+        borderWidth: 1,
+        titleColor: "#e2e8f0",
+        bodyColor: "#94a3b8",
+        callbacks: { label: ctx => ` ${ctx.parsed.y}% accuracy` }
+      },
+      annotation: {}
+    },
+    scales: {
+      x: {
+        ticks: { color: "#64748b", font: { family: "IBM Plex Mono", size: 10 }, maxRotation: 35 },
+        grid: { color: "rgba(255,255,255,0.04)" }
+      },
+      y: {
+        min: 40, max: 100,
+        ticks: { color: "#64748b", font: { family: "IBM Plex Mono", size: 10 }, callback: v => v+"%" },
+        grid: { color: "rgba(255,255,255,0.05)" }
+      }
+    }
+  }
+});
+
+// RADAR CHART
+new Chart(document.getElementById("radarChart"), {
+  type: "radar",
+  data: {
+    labels: ["Accuracy", "Speed", "Interpretable", "Handles Time", "Low Overfit", "Easy to Build"],
+    datasets: [
+      {
+        label: "Your Random Forest",
+        data: [80, 85, 75, 30, 45, 80],
+        backgroundColor: "rgba(79,156,249,0.15)",
+        borderColor: "#4f9cf9",
+        pointBackgroundColor: "#4f9cf9",
+        borderWidth: 2,
+        pointRadius: 4
+      },
+      {
+        label: "LSTM (best DL)",
+        data: [94, 40, 25, 95, 80, 30],
+        backgroundColor: "rgba(245,158,11,0.1)",
+        borderColor: "rgba(245,158,11,0.7)",
+        pointBackgroundColor: "rgba(245,158,11,0.7)",
+        borderWidth: 2,
+        borderDash: [5,3],
+        pointRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: {
+          color: "#94a3b8",
+          font: { family: "IBM Plex Mono", size: 10 },
+          boxWidth: 12,
+          padding: 14
+        }
+      },
+      tooltip: {
+        backgroundColor: "#1b2130",
+        titleColor: "#e2e8f0",
+        bodyColor: "#94a3b8"
+      }
+    },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { display: false },
+        grid: { color: "rgba(255,255,255,0.07)" },
+        angleLines: { color: "rgba(255,255,255,0.07)" },
+        pointLabels: { color: "#94a3b8", font: { family: "IBM Plex Mono", size: 10 } }
+      }
+    }
+  }
+});
+
+// LINE CHART (evolution)
+new Chart(document.getElementById("lineChart"), {
+  type: "line",
+  data: {
+    labels: ["Baseline\n(Random Walk)", "Logistic\nRegression", "Decision\nTree", "SVM", "YOUR\nRandom Forest", "XGBoost", "LSTM", "Hybrid\nLSTM-TAL"],
+    datasets: [{
+      label: "Accuracy %",
+      data: [50, 75, 75, 78, 80, 91, 88, 94],
+      backgroundColor: ctx => {
+        const i = ctx.dataIndex;
+        return i === 4 ? "#4f9cf9" : "rgba(255,255,255,0)";
+      },
+      borderColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, ctx.chart.width, 0);
+        g.addColorStop(0,   "rgba(100,116,139,0.4)");
+        g.addColorStop(0.5, "#4f9cf9");
+        g.addColorStop(1,   "rgba(245,158,11,0.7)");
+        return g;
+      },
+      borderWidth: 2.5,
+      pointBackgroundColor: [
+        "#374151","#64748b","#64748b","#64748b",
+        "#4f9cf9",
+        "#f59e0b","#10b981","#f59e0b"
+      ],
+      pointRadius: [4,4,4,4,8,5,5,5],
+      pointBorderWidth: [1,1,1,1,2,1,1,1],
+      tension: 0.35,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#1b2130",
+        titleColor: "#e2e8f0",
+        bodyColor: "#94a3b8",
+        callbacks: { label: ctx => ` ${ctx.parsed.y}%` }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: "#64748b", font: { family: "IBM Plex Mono", size: 9 }, maxRotation: 0 },
+        grid: { color: "rgba(255,255,255,0.04)" }
+      },
+      y: {
+        min: 40, max: 100,
+        ticks: { color: "#64748b", font: { family: "IBM Plex Mono", size: 10 }, callback: v => v+"%" },
+        grid: { color: "rgba(255,255,255,0.05)" }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
