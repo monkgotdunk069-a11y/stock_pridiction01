@@ -1,0 +1,35 @@
+{
+  "random_forest": {
+    "train_accuracy": 0.9813,
+    "test_accuracy": 0.8,
+    "file": "random_forest.pkl"
+  },
+  "decision_tree": {
+    "train_accuracy": 1.0,
+    "test_accuracy": 0.7525,
+    "file": "decision_tree.pkl"
+  },
+  "logistic_regression": {
+    "train_accuracy": 0.8023,
+    "test_accuracy": 0.7847,
+    "file": "logistic_regression.pkl"
+  },
+  "features": [
+    "MA_5",
+    "MA_10",
+    "Lag_1",
+    "Lag_2",
+    "Volatility",
+    "Return",
+    "Volume_MA",
+    "MA_diff",
+    "Price_Change",
+    "Volume_Change"
+  ],
+  "stocks": [
+    "TCS.NS",
+    "INFY.NS",
+    "RELIANCE.NS",
+    "HDFCBANK.NS"
+  ]
+}
