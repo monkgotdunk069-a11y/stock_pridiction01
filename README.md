@@ -27,6 +27,8 @@ stock_pridiction01/
 ├── models/                # Directory containing saved .pkl models & metadata
 ├── dashboard.html         # Interactive performance dashboard
 ├── api_docs.html          # API documentation & testing interface
+├── visualize.py           # Premium visualization generator (Matplotlib/Seaborn)
+├── visualizations/        # Generated charts and graphs
 ├── requirements.txt       # Project dependencies
 ├── mainn.ipynb            # Analysis & experimentation notebook
 ├── final.xlsx             # Latest prediction results
@@ -82,7 +84,14 @@ python api.py
 ```
 The server will start on `http://localhost:5000` (or the first available port).
 
-### 4. View Dashboard & Docs
+### 4. Generate Visualizations
+To create high-quality performance charts:
+```bash
+python visualize.py
+```
+Charts will be saved to the `visualizations/` directory.
+
+### 5. View Dashboard & Docs
 - Open `dashboard.html` in your browser to see performance metrics.
 - Navigate to `http://localhost:5000` to view the API documentation.
 

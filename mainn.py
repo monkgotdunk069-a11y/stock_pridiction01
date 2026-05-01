@@ -12,6 +12,12 @@ from sklearn.linear_model import LogisticRegression
 
 from newsapi import NewsApiClient
 from textblob import TextBlob
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set global style for visualizations
+plt.style.use('seaborn-v0_8')
+sns.set_theme(style="whitegrid")
 
 # %% [Cell 2] - Download Stock Data
 stocks = ["TCS.NS", "INFY.NS", "RELIANCE.NS", "HDFCBANK.NS"]
@@ -39,6 +45,18 @@ df = pd.concat(df_list, ignore_index=True)
 
 print("✓ Data downloaded successfully")
 print(df.head())
+
+# Visualize Raw Stock Trends
+plt.figure(figsize=(14, 7))
+for stock in stocks:
+    stock_data = df[df['Stock'] == stock]
+    plt.plot(stock_data['Date'], stock_data['Close'], label=stock, linewidth=2)
+plt.title('Stock Price Trends (2022-2025)', fontsize=16, fontweight='bold')
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Price (INR)', fontsize=12)
+plt.legend()
+plt.tight_layout()
+plt.show()
 
 # %% [Cell 3] - Data Info
 print(f"\nShape: {df.shape}")
@@ -111,8 +129,38 @@ df.dropna(inplace=True)
 
 print(f"✓ Shape after feature engineering: {df.shape}")
 print(f"✓ Columns: {df.columns.tolist()}")
-print(f"✓ 'Stock' column exists: {'Stock' in df.columns}")
 print(df.head())
+
+features = [
+    'MA_5', 'MA_10',
+    'Lag_1', 'Lag_2',
+    'Volatility',
+    'Return',
+    'Volume_MA',
+    'MA_diff',
+    'Price_Change',
+    'Volume_Change'
+]
+
+# Visualize Correlation Heatmap
+plt.figure(figsize=(12, 10))
+corr = df[features + ['Target']].corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title('Feature Correlation Heatmap', fontsize=16, fontweight='bold', pad=20)
+plt.tight_layout()
+plt.show()
+
+# Visualize Price vs Moving Averages for a sample stock
+sample_stock = "TCS.NS"
+sample_df = df[df['Stock'] == sample_stock].tail(100)
+plt.figure(figsize=(14, 6))
+plt.plot(sample_df['Date'], sample_df['Close'], label='Close Price', color='black', alpha=0.8)
+plt.plot(sample_df['Date'], sample_df['MA_5'], label='MA 5', color='blue', linestyle='--')
+plt.plot(sample_df['Date'], sample_df['MA_10'], label='MA 10', color='red', linestyle='--')
+plt.title(f'Price vs Moving Averages (Last 100 days) - {sample_stock}', fontsize=14, fontweight='bold')
+plt.legend()
+plt.tight_layout()
+plt.show()
 
 # %% [Cell 7] - Sentiment Analysis
 newsapi = NewsApiClient(api_key='4cb5f1c4b1ba44829d55c3bb4207590c')
@@ -153,17 +201,6 @@ avg_sentiment = sentiment_df['Sentiment'].mean()
 df['Sentiment'] = avg_sentiment
 
 # %% [Cell 8] - Train/Test Split + Model Training
-features = [
-    'MA_5', 'MA_10',
-    'Lag_1', 'Lag_2',
-    'Volatility',
-    'Return',
-    'Volume_MA',
-    'MA_diff',
-    'Price_Change',
-    'Volume_Change'
-]
-
 X = df[features]
 y = df['Target']
 
@@ -205,6 +242,17 @@ try:
 except Exception as e:
     print(f"✗ Error training pipeline: {str(e)}")
 
+# Visualize Feature Importance (Random Forest)
+if 'pipeline' in locals() and hasattr(pipeline.named_steps['classifier'], 'feature_importances_'):
+    importances = pipeline.named_steps['classifier'].feature_importances_
+    feat_importances = pd.Series(importances, index=features).sort_values(ascending=True)
+    plt.figure(figsize=(10, 6))
+    feat_importances.plot(kind='barh', color='skyblue', edgecolor='black')
+    plt.title('Random Forest - Feature Importance', fontsize=14, fontweight='bold')
+    plt.xlabel('Importance Score')
+    plt.tight_layout()
+    plt.show()
+
 # %% [Cell 9] - Predictions & Results
 pred = pipeline.predict(X_test)
 conf = pipeline.predict_proba(X_test)[:, 1]
@@ -244,6 +292,23 @@ print("\n✓ Sample predictions:")
 print(results[['Stock', 'Date', 'Prediction', 'Confidence', 'Signal']].head(15))
 
 results.head()
+
+# Visualize Prediction Distribution & Confidence
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+# Confidence Distribution
+sns.histplot(results['Confidence'], bins=20, kde=True, ax=ax1, color='purple')
+ax1.set_title('Prediction Confidence Distribution', fontsize=13, fontweight='bold')
+ax1.axvline(0.65, color='green', linestyle='--', label='BUY Threshold')
+ax1.axvline(0.35, color='red', linestyle='--', label='SELL Threshold')
+ax1.legend()
+
+# Signal Counts
+sns.countplot(x='Signal', data=results, ax=ax2, palette={'BUY': 'green', 'SELL': 'red', 'HOLD': 'gray'})
+ax2.set_title('Generated Trading Signals Count', fontsize=13, fontweight='bold')
+
+plt.tight_layout()
+plt.show()
 
 # %% [Cell 10] - Export to Excel
 import openpyxl
@@ -318,4 +383,15 @@ print("=" * 40)
 print(comparison)
 
 comparison.to_excel("model_comparison.xlsx", index=False)
+
+# Visualize Model Comparison
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Model', y='Accuracy', data=comparison, palette='magma')
+plt.title('Model Accuracy Comparison', fontsize=14, fontweight='bold')
+plt.ylim(0, 1.0)
+for i, val in enumerate(comparison['Accuracy']):
+    plt.text(i, val + 0.02, f'{val:.4f}', ha='center', fontweight='bold')
+plt.tight_layout()
+plt.show()
+
 print("\n✓ Comparison exported to model_comparison.xlsx")
